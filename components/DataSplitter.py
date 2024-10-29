@@ -41,6 +41,10 @@ class DataSplitter(object):
         return trainSet, testSet
     
 
+    def reset(self) -> None:
+        self.pokemonsPerType = {}
+        self.__initializePokemonsPerType()
+
 
     ######################################## PRIVATE METHODS ########################################
     def __calculateTotalPokemonsPerType(self, data: List[Pokemon]) -> None: 

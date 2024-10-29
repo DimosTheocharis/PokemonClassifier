@@ -2,6 +2,7 @@ import csv
 from PIL import Image # type: ignore
 import numpy as np
 from numpy._typing import NDArray
+from typing import List
 
 from customTypes.Pokemon import Pokemon
 from customTypes.PokemonType import PokemonType
@@ -10,7 +11,7 @@ class DataLoader():
     def __init__(self):
         self.data: list[Pokemon] = []
     
-    def readPokemonData(self, filePath: str) -> list[Pokemon]:
+    def readPokemonData(self, filePath: str) -> List[Pokemon]:
         '''
             Reads both pokemon data such as name, types etc and pokemon images.
             Constructs a list of Pokemon instances containing all this information
@@ -51,13 +52,13 @@ class DataLoader():
 
 
 
-    def __readPokemonImage(self, name: str) -> NDArray[np.integer]:
+    def __readPokemonImage(self, name: str) -> Image:
         '''
             Reads the image of the pokemon with the given {name} and returns a NDArray of its pixels
         '''
         try:
             image = Image.open(f"data/pokemonImages/{name}.png").convert("RGB")
-            return np.array(image)
+            return image
         except:
             print(f"Could not load image data/images/{name}.png!")
         

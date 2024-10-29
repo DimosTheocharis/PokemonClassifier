@@ -15,4 +15,4 @@ class BaseClassifier():
             The distance between 2 pokemons is the l2 norm of the matrix that results as the difference
             of the pixels of these images in every point
         '''
-        return np.linalg.norm(pokemonA.image - pokemonB.image)
+        return np.linalg.norm(pokemonA.getImagePixels() - pokemonB.getImagePixels())
