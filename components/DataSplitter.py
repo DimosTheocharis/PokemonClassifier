@@ -15,6 +15,11 @@ class DataSplitter(object):
 
     ######################################## PUBLIC METHODS ########################################
     def trainTestSplit(self, data: List[Pokemon]) -> Tuple[List[Pokemon], List[Pokemon]]:
+        '''
+            Randomly seperates the dataset into 2 sets: \n
+            * Train set (default 80%)
+            * Test set (default 20%)
+        '''
         self.__calculateTotalPokemonsPerType(data)
 
         trainSet: List[Pokemon] = []
@@ -66,7 +71,9 @@ class DataSplitter(object):
         '''
             Counts the number of pokemons that have as primary type each pokemon type
         '''
+        # A dictionary that keeps track of how many times each pokemon is found in trainSet and testSet together.
         counters: Dict[str, int] = {}
+        
         for pokemon in trainSet:
             if (pokemon.name in counters):
                 counters[pokemon.name] += 1

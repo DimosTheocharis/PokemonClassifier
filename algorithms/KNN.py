@@ -11,19 +11,21 @@ class KNNalgorithm(BaseClassifier):
     '''
     def __init__(self, k: int, trainSet: List[Pokemon]):
         super().__init__(trainSet)
-        self.k = k
+        self.__k = k
 
 
-    def run(self, testSet: List[Pokemon]) -> int:
+    def run(self, testSet: List[Pokemon]) -> float:
         ''' 
             Runs the K-Nearest-Neighbor for the given testSet. The method will return the classification 
-            success rate (from 0.0 to 1.0)
+            success rate (from 0.0 to 1.0). A sample (pokemon) from the test set is correctly classified 
+            if the most common class (pokemonType) of the k nearest neighbors is the same as the sample's 
+            type1 or type2
         '''
 
         correctClassifications: int = 0
 
-        for testPokemon in testSet:
-            kNearestNeighbors: List[Tuple[Pokemon, int]] = self.findKNearestNeighbors(testPokemon)
+        for index, testPokemon in enumerate(testSet):
+            kNearestNeighbors: List[Tuple[Pokemon, int]] = self.__findKNearestNeighbors(testPokemon)
             votedPokemonType: PokemonType = self.__vote(kNearestNeighbors)
 
             if (votedPokemonType == testPokemon.type1 or votedPokemonType == testPokemon.type2):
@@ -33,18 +35,18 @@ class KNNalgorithm(BaseClassifier):
 
 
     ######################################## PRIVATE METHODS ########################################
-    def findKNearestNeighbors(self, testPokemon: Pokemon) -> List[Tuple[Pokemon, int]]:
+    def __findKNearestNeighbors(self, testPokemon: Pokemon) -> List[Tuple[Pokemon, int]]:
         '''
             Finds the k Pokemons from the train set that are nearest to the given {testPokemon} 
         '''
         kNearestNeighbors: List[Tuple[Pokemon, int]] = []
 
         # Initialize the k nearest neighbors to the first k pokemons in the train set
-        for i in range(self.k):
+        for i in range(self.__k):
             distance = self._calculateDistance(testPokemon, self._trainSet[i])
             kNearestNeighbors.append((self._trainSet[i], distance))
         
-        for i in range(self.k, len(self._trainSet)):
+        for i in range(self.__k, len(self._trainSet)):
             trainPokemon: Pokemon = self._trainSet[i]
             distance: int = self._calculateDistance(testPokemon, trainPokemon)
 

@@ -7,19 +7,16 @@ class FeatureReduction(object):
     def __init__(self):
         pass
 
-    def downSample(self, data: List[Pokemon], factor: int) -> List[Pokemon]:
+    def downSample(self, data: List[Pokemon], newWidth: int, newHeight: int) -> List[Pokemon]:
         '''
-            Returns a new list of Pokemon, where each Pokemon's image will be {factor} times sampled down.
-            For example, having an image of 120x120 pixels and sampling down with a factor of 4 times,
-            will get you a 30x30 pixels image.
+            Returns a new list of Pokemon, where each Pokemon's image will be resized to (newWidth, newHeight).
         '''
         
         newData: List[Pokemon] = []
 
         for pokemon in data:
             copy: Pokemon = pokemon.getCopy()
-            copy.setImage(copy.image.reduce(factor))
-
+            copy.setImage(copy.image.resize((newWidth, newHeight)))
             newData.append(copy)
 
         return newData
