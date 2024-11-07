@@ -6,9 +6,12 @@ from customTypes.Pokemon import Pokemon
 from customTypes.PokemonType import PokemonType
 
 class DataSplitter(object):
+    '''
+        This class is responsible for providing methods that split the entire datasets into smaller sub-sets
+    '''
     def __init__(self):
-        self.pokemonsPerType: Dict[PokemonType, int] = {}
-        self.trainSetSize: float = 0.8
+        self.__pokemonsPerType: Dict[PokemonType, int] = {}
+        self.__trainSetSize: float = 0.8
 
         self.__initializePokemonsPerType()
 
@@ -18,7 +21,9 @@ class DataSplitter(object):
         '''
             Randomly seperates the dataset into 2 sets: \n
             * Train set (default 80%)
-            * Test set (default 20%)
+            * Test set (default 20%) \n
+            Then it randomly shuffles the pokemons in each set in order for each pokemon type 
+            to be present in the whole set
         '''
         self.__calculateTotalPokemonsPerType(data)
 
@@ -26,7 +31,8 @@ class DataSplitter(object):
         testSet: List[Pokemon] = []
 
         for pokemonType in PokemonType:
-            totalPokemonsForTrain: int = round(self.pokemonsPerType[pokemonType] * self.trainSetSize)
+            # Find the number of pokemons that should consist the train set
+            totalPokemonsForTrain: int = round(self.__pokemonsPerType[pokemonType] * self.__trainSetSize)
 
             # Find the pokemons that have as primary type the current {pokemonType}
             allPokemons: List[Pokemon] = [pokemon for pokemon in data if pokemon.type1 == pokemonType]
@@ -36,18 +42,24 @@ class DataSplitter(object):
 
             # The first {totalPokemonsForTrain} pokemons belong to the train set
             trainSet.extend(allPokemons[0: totalPokemonsForTrain])
+
+            # The rest pokemons belong to the test set
             testSet.extend(allPokemons[totalPokemonsForTrain:])
 
         if (self.__validateTrainAndTestSets(trainSet, testSet) == False): 
             print("!!!!!!! The splitting isn't proper! There are duplicate pokemons.")
             return ([], [])
+        
+        # Randomly shuffle the pokemon in the trainSet & testSet
+        random.shuffle(trainSet)
+        random.shuffle(testSet)
 
 
         return trainSet, testSet
     
 
     def reset(self) -> None:
-        self.pokemonsPerType = {}
+        self.__pokemonsPerType = {}
         self.__initializePokemonsPerType()
 
 
@@ -57,14 +69,14 @@ class DataSplitter(object):
             Counts the number of pokemons that have as primary type each pokemon type
         '''
         for pokemon in data:
-            self.pokemonsPerType[pokemon.type1] += 1
+            self.__pokemonsPerType[pokemon.type1] += 1
 
     def __initializePokemonsPerType(self) -> None:
         '''
             Initializes the counter for each pokemon type to zero.
         '''
         for pokemonType in PokemonType:
-            self.pokemonsPerType[pokemonType] = 0
+            self.__pokemonsPerType[pokemonType] = 0
 
 
     def __validateTrainAndTestSets(self, trainSet: List[Pokemon], testSet: List[Pokemon]) -> bool:
