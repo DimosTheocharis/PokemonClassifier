@@ -11,17 +11,23 @@ class DataSplitter(object):
     '''
     def __init__(self):
         self.__pokemonsPerType: Dict[PokemonType, int] = {}
-        self.__trainSetSize: float = 0.8
 
         self.__initializePokemonsPerType()
 
 
     ######################################## PUBLIC METHODS ########################################
-    def trainTestSplit(self, data: List[Pokemon]) -> Tuple[List[Pokemon], List[Pokemon]]:
+    def trainTestValidationSplit(
+            self, 
+            data: List[Pokemon],
+            trainSetSize: float = 0.8,
+            testSetSize: float = 0.1,
+            validationSetSize: float = 0.1
+        ) -> Tuple[List[Pokemon], List[Pokemon], List[Pokemon]]:
         '''
-            Randomly seperates the dataset into 2 sets: \n
+            Randomly seperates the dataset into 3 sets: \n
             * Train set (default 80%)
-            * Test set (default 20%) \n
+            * Test set (default 10%) 
+            * Validation set (default 10%) \n
             Then it randomly shuffles the pokemons in each set in order for each pokemon type 
             to be present in the whole set
         '''
@@ -29,10 +35,14 @@ class DataSplitter(object):
 
         trainSet: List[Pokemon] = []
         testSet: List[Pokemon] = []
+        validationSet: List[Pokemon] = []
 
         for pokemonType in PokemonType:
             # Find the number of pokemons that should consist the train set
-            totalPokemonsForTrain: int = round(self.__pokemonsPerType[pokemonType] * self.__trainSetSize)
+            totalPokemonsForTrain: int = round(self.__pokemonsPerType[pokemonType] * trainSetSize)
+
+            # Find the number of pokemons that should consist the test set
+            totalPokemonsForTest: int = round(self.__pokemonsPerType[pokemonType] * testSetSize)
 
             # Find the pokemons that have as primary type the current {pokemonType}
             allPokemons: List[Pokemon] = [pokemon for pokemon in data if pokemon.type1 == pokemonType]
@@ -43,19 +53,22 @@ class DataSplitter(object):
             # The first {totalPokemonsForTrain} pokemons belong to the train set
             trainSet.extend(allPokemons[0: totalPokemonsForTrain])
 
-            # The rest pokemons belong to the test set
-            testSet.extend(allPokemons[totalPokemonsForTrain:])
+            # The next {totalPokemonsForTest} pokemons belong to the test set
+            testSet.extend(allPokemons[totalPokemonsForTrain : totalPokemonsForTrain + totalPokemonsForTest])
 
-        if (self.__validateTrainAndTestSets(trainSet, testSet) == False): 
+            # The rest pokemons belong to the validation set
+            validationSet.extend(allPokemons[totalPokemonsForTrain + totalPokemonsForTest:])
+
+        if (self.__validateTrainTestValidationSets(trainSet, testSet, validationSet) == False): 
             print("!!!!!!! The splitting isn't proper! There are duplicate pokemons.")
             return ([], [])
         
         # Randomly shuffle the pokemon in the trainSet & testSet
         random.shuffle(trainSet)
         random.shuffle(testSet)
+        random.shuffle(validationSet)
 
-
-        return trainSet, testSet
+        return trainSet, testSet, validationSet
     
 
     def reset(self) -> None:
@@ -79,7 +92,7 @@ class DataSplitter(object):
             self.__pokemonsPerType[pokemonType] = 0
 
 
-    def __validateTrainAndTestSets(self, trainSet: List[Pokemon], testSet: List[Pokemon]) -> bool:
+    def __validateTrainTestValidationSets(self, trainSet: List[Pokemon], testSet: List[Pokemon], validationSet: List[Pokemon]) -> bool:
         '''
             Counts the number of pokemons that have as primary type each pokemon type
         '''
@@ -93,6 +106,12 @@ class DataSplitter(object):
                 counters[pokemon.name] = 1
 
         for pokemon in testSet:
+            if (pokemon.name in counters):
+                counters[pokemon.name] += 1
+            else:
+                counters[pokemon.name] = 1
+
+        for pokemon in validationSet:
             if (pokemon.name in counters):
                 counters[pokemon.name] += 1
             else:

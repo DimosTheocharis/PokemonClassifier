@@ -92,7 +92,7 @@ class DataAugmentation(object):
                     processingTypes.append(ProcessingType.DecreaseBrightness)
 
             # Crop
-            if (random.random() >= 0.5):
+            if (random.random() >= 0.8):
                 r = random.random()
                 if (r <= 0.2):
                     newImage = self.cropImageCenter(newImage)
