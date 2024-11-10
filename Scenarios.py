@@ -4,6 +4,7 @@ import time
 from algorithms.KNN import KNNalgorithm
 from algorithms.NCC import NCCalgorithm
 from algorithms.MLP import MultiLayerPerceptron
+from algorithms.BaseClassifier import BaseClassifier
 
 from components.DataLoader import DataLoader
 from components.DataSplitter import DataSplitter
@@ -11,6 +12,7 @@ from components.FeatureReduction import FeatureReduction
 from components.DataAugmentation import DataAugmentation
 from components.DataPreparation import DataPreparation
 from components.CrossValidation import CrossValidation
+from components.Logger import Logger
 
 from customTypes.Pokemon import Pokemon
 from customTypes.Settings import FeatureReductionSettings
@@ -44,7 +46,7 @@ class Scenarios(object):
         featureReduction: FeatureReduction = FeatureReduction()
         dataAugmentation: DataAugmentation = DataAugmentation()
         
-        trainSet, testSet, _ = Scenarios.readAndSplitData(readSavedData)
+        trainSet, testSet, _ = Scenarios.readAndSplitData(readSavedData, generateValidationSet=False)
 
         if (featureReductionSettings):
             trainSet = featureReduction.downSample(trainSet, featureReductionSettings['newWidth'], featureReductionSettings['newHeight'])
@@ -62,15 +64,19 @@ class Scenarios(object):
         # Ternimate timer
         endTime = time.time()
 
-        print(f"""
-              Algorithm = KNN,
-              k={k},
-              Image dimensions = {dimensionality},
-              Train-set size = {len(trainSet)},
-              Test-set size = {len(testSet)},
-              Data augmentation = {augmentData},
-              Success rate = {round(knnSuccessRate * 100, 2)}%
-              Total time = {round(endTime - startTime)} seconds""")
+        logger: Logger = Logger("logs/KNN results", appendTimestamp=False)
+        messages: List[str] = [
+            f"k={k}",
+            f"\nImage dimensions = {dimensionality}",
+            f"\nTrain-set size = {len(trainSet)}",
+            f"\nTest-set size = {len(testSet)}",
+            f"\nData augmentation = {augmentData}",
+            f"\nRead saved data = {readSavedData}",
+            f"\nSuccess rate = {round(knnSuccessRate * 100, 2)}%",
+            f"\nTotal time = {round(endTime - startTime)} seconds"
+        ]
+
+        logger.logData(messages, True)
 
     @staticmethod
     def NCCScenario(
@@ -87,7 +93,7 @@ class Scenarios(object):
         featureReduction: FeatureReduction = FeatureReduction()
         dataAugmentation: DataAugmentation = DataAugmentation()
 
-        trainSet, testSet, _ = Scenarios.readAndSplitData(readSavedData)
+        trainSet, testSet, _ = Scenarios.readAndSplitData(readSavedData, generateValidationSet=False)
 
         if (featureReductionSettings):
             trainSet = featureReduction.downSample(trainSet, featureReductionSettings['newWidth'], featureReductionSettings['newHeight'])
@@ -106,14 +112,18 @@ class Scenarios(object):
         # Ternimate timer
         endTime = time.time()
 
-        print(f"""
-              Algorithm = NCC, 
-              Image dimensions = {dimensionality}, 
-              Train-set size = {len(trainSet)},  
-              Test-set size = {len(testSet)},
-              Data augmentation = {augmentData},
-              Success rate = {round(nccSuccessRate * 100, 2)}%
-              Total time = {round(endTime - startTime)} seconds""")
+        logger: Logger = Logger("logs/NCC results", appendTimestamp=False)
+        messages: List[str] = [
+            "Algorithm = NCC",
+            f"\nImage dimensions = {dimensionality}",
+            f"\nTrain-set size = {len(trainSet)}",
+            f"\nTest-set size = {len(testSet)}",
+            f"\nData augmentation = {augmentData}",
+            f"\nSuccess rate = {round(nccSuccessRate * 100, 2)}%",
+            f"\nTotal time = {round(endTime - startTime)} seconds"
+        ]
+
+        logger.logData(messages, printToConsole=True)
         
 
     @staticmethod
@@ -126,7 +136,7 @@ class Scenarios(object):
         dataAugmentation: DataAugmentation = DataAugmentation()
         dataPreperation: DataPreparation = DataPreparation()
 
-        trainSet, testSet, validationSet = Scenarios.readAndSplitData(readSavedData, generateValidationSet=True)
+        trainSet, testSet, validationSet = Scenarios.readAndSplitData(readSavedData, generateValidationSet=False)
 
         if (featureReductionSettings):
             trainSet = featureReduction.downSample(trainSet, featureReductionSettings['newWidth'], featureReductionSettings['newHeight'])
@@ -140,22 +150,24 @@ class Scenarios(object):
 
         xTrain, yTrain = dataPreperation.prepare(trainSet)
         xTest, yTest = dataPreperation.prepare(testSet)
-        xValidation, yValidation = dataPreperation.prepare(validationSet)
+        #xValidation, yValidation = dataPreperation.prepare(validationSet)
 
         dimensionality: int = xTrain.size(dim=1)
 
-        network: MultiLayerPerceptron = MultiLayerPerceptron(learningRate=0.01, layers=[
-                (LayerType.Linear, 256, ActivationFunctionType.ReLu),
+        network: MultiLayerPerceptron = MultiLayerPerceptron(learningRate=0.005, layers=[
+                (LayerType.Linear, 1024, ActivationFunctionType.ReLu),
                 (LayerType.Linear, 18, ActivationFunctionType.Sigmoid),
-        ], dimensionality=dimensionality)
-
+        ], dimensionality=dimensionality, epochs=50)
 
         print(network)
+        print(xTrain.size(dim=0))
+        print(xTest.size(dim=0))
 
-        network.train(xTrain, yTrain, True, xValidation, yValidation)
-        network.test(xTest, yTest)
+        network.train(xTrain, yTrain, False)
+        loss = network.test(xTest, yTest)
+        print(loss)
 
-
+    @staticmethod
     def crossValidationScenario(
         featureReductionSettings: FeatureReductionSettings | None = None,
         augmentData: bool = False,
@@ -181,40 +193,52 @@ class Scenarios(object):
         crossValidation: CrossValidation = CrossValidation(10, xTrain, yTrain)
         
         architectureValues: List[List[Tuple[LayerType, int, ActivationFunctionType]]] = [
-            # [
-            #     (LayerType.Linear, 512, ActivationFunctionType.ReLu),
-            #     (LayerType.Linear, 256, ActivationFunctionType.ReLu),
-            #     (LayerType.Linear, 18, ActivationFunctionType.Sigmoid)
-            # ],
-            # [
-            #     (LayerType.Linear, 1025, ActivationFunctionType.ReLu),
-            #     (LayerType.Linear, 512, ActivationFunctionType.ReLu),
-            #     (LayerType.Linear, 256, ActivationFunctionType.ReLu),
-            #     (LayerType.Linear, 18, ActivationFunctionType.Sigmoid)
-            # ]
-            [
-                (LayerType.Linear, 1024, ActivationFunctionType.ReLu),
-                (LayerType.Linear, 18, ActivationFunctionType.Sigmoid)
-            ],
             [
                 (LayerType.Linear, 512, ActivationFunctionType.ReLu),
-                (LayerType.Linear, 18, ActivationFunctionType.Sigmoid)
-            ],
-            [
                 (LayerType.Linear, 256, ActivationFunctionType.ReLu),
                 (LayerType.Linear, 18, ActivationFunctionType.Sigmoid)
             ],
             [
-                (LayerType.Linear, 64, ActivationFunctionType.ReLu),
+                (LayerType.Linear, 512, ActivationFunctionType.Tanh),
+                (LayerType.Linear, 256, ActivationFunctionType.Tanh),
                 (LayerType.Linear, 18, ActivationFunctionType.Sigmoid)
-            ]
+            ],
+            # [
+            #     (LayerType.Linear, 1025, ActivationFunctionType.ReLu),
+            #     (LayerType.Linear, 512, ActivationFunctionType.ReLu),
+            #     (LayerType.Linear, 256, ActivationFunctionType.ReLu),
+            #     (LayerType.Linear, 128, ActivationFunctionType.ReLu),
+            #     (LayerType.Linear, 18, ActivationFunctionType.Sigmoid)
+            # ],
+            # [
+            #     (LayerType.Linear, 1024, ActivationFunctionType.Tanh),
+            #     (LayerType.Linear, 18, ActivationFunctionType.Sigmoid)
+            # ],
+            # [
+            #     (LayerType.Linear, 1024, ActivationFunctionType.ReLu),
+            #     (LayerType.Linear, 18, ActivationFunctionType.Sigmoid)
+            # ],
+            # [
+            #     (LayerType.Linear, 512, ActivationFunctionType.ReLu),
+            #     (LayerType.Linear, 18, ActivationFunctionType.Sigmoid)
+            # ],
+            # [
+            #     (LayerType.Linear, 256, ActivationFunctionType.ReLu),
+            #     (LayerType.Linear, 18, ActivationFunctionType.Sigmoid)
+            # ],
+            # [
+            #     (LayerType.Linear, 64, ActivationFunctionType.ReLu),
+            #     (LayerType.Linear, 18, ActivationFunctionType.Sigmoid)
+            # ]
         ]
 
-        epochValues: List[int] = [50]
+        epochValues: List[int] = [40]
         learningRateValues: List[float] = [0.001, 0.0001, 0.005]
+        learningRateValues = [0.001, 0.005, 0.0001]
 
         crossValidation.run(architectureValues, epochValues, learningRateValues)
 
+    @staticmethod
     def countPokemonTypesScenario():
         dataLoader: DataLoader = DataLoader()
         
@@ -237,6 +261,29 @@ class Scenarios(object):
                 counter[pokemon.type2.name] = 1
 
         return counter
+    
+    @staticmethod
+    def checkPokemonDistanceScenario(pokemonA: str, pokemonB: str) -> None:
+        '''
+            Calculates the distance between {pokemonA} and {pokemonB}. The arguments are strings and 
+            represent the names of the pokemons, so at first, it loads these Pokemons from the database.
+        '''
+        dataLoader: DataLoader = DataLoader()
+        
+        data: List[Pokemon] = dataLoader.readPokemonData(Scenarios.filePathForData, Scenarios.filePathForImages)
+        
+        baseClassifier: BaseClassifier = BaseClassifier(data)
+
+        pokemonA: Pokemon = [pokemon for pokemon in data if pokemon.name == pokemonA][0]
+        pokemonB: Pokemon = [pokemon for pokemon in data if pokemon.name == pokemonB][0]
+
+        distance: float = baseClassifier._calculateDistance(pokemonA, pokemonB)
+
+        print(f"Distance({pokemonA.name}, {pokemonB.name}) = {distance}")
+
+
+
+
 
     @staticmethod
     def readAndSplitData(readSavedData: bool, generateValidationSet: bool) -> Tuple[List[Pokemon], List[Pokemon], List[Pokemon]]:

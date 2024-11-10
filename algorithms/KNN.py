@@ -77,14 +77,14 @@ class KNNalgorithm(BaseClassifier):
             Will predict the pokemonType as following:
             For every pokemonType, the method will compute a value. The pokemonType that will be assigned the biggest value
             will be returned. The value will be computed by adding up normalized distance complement factors. For example:
-            neighbor1: Fire, 5700(distance)
-            neighbor2: Steel, 5500
-            neighbor3: Fire & Ground, 6000
+            neighbor1: Fire, 5500 (distance)
+            neighbor2: Steel, 4500
+            neighbor3: Fire & Ground, 5200
 
-            Total distance = 17200 \n
-            Fire -> (17200 - 5700) / 17200 + (17200 - 6000) / 17200 = 1.32 \n
-            Steel -> (17200 - 5500) / 17200 = 0.68 \n
-            Ground -> (17200 - 6000) / 17200 = 0.65 \n
+            Total distance = 15.200 \n
+            Fire -> (15.200 - 5500) / 15.200 + (15.200 - 5200) / 15.200 = 1.30 \n
+            Steel -> (15.200 - 5500) / 15.200 = 0.70 \n
+            Ground -> (15.200 - 6000) / 15.200 = 0.61 \n
 
             So the pokemonType = Fire will be returned
         '''

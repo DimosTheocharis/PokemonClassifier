@@ -8,3 +8,4 @@ class LayerType(Enum):
 class ActivationFunctionType(Enum):
     ReLu = "ReLu"
     Sigmoid = "Sigmoid"
+    Tanh = "Tanh"

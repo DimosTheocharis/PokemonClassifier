@@ -37,6 +37,8 @@ class MultiLayerPerceptron(nn.Module):
                 self.__model.append(nn.ReLU())
             elif layer[2] == ActivationFunctionType.Sigmoid:
                 self.__model.append(nn.Sigmoid())
+            elif layer[2] == ActivationFunctionType.Tanh:
+                self.__model.append(nn.Tanh())
 
             inFeatures = layer[1]
 

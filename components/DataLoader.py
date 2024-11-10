@@ -1,5 +1,4 @@
 import csv
-import os
 from PIL import Image # type: ignore
 from typing import List
 

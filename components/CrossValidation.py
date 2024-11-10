@@ -3,6 +3,7 @@ from typing import List, Tuple
 import time
 
 from algorithms.MLP import MultiLayerPerceptron
+from components.Logger import Logger
 from customTypes.NeuralNetworkTypes import LayerType, ActivationFunctionType
 
 class CrossValidation(object):
@@ -18,6 +19,7 @@ class CrossValidation(object):
     def __init__(self, k: int, X: torch.Tensor, y: torch.Tensor) -> None:
         self.__k: int = k
         self.__dimensionality = X.size(dim=1)
+        self.__multitude = X.size(dim=0) # How many data consist the dataset (k - 1 train sets and 1 validation set)
         self.__X: torch.Tensor = X
         self.__y: torch.Tensor = y
 
@@ -35,6 +37,18 @@ class CrossValidation(object):
             * {learningRateValues} -> Possible values about how fast/slow the weights follow the 
             slope of the error-derivative 
         '''
+        logger: Logger = Logger("logs/Run_5", appendTimestamp=True)
+
+        # Log some important data about the cross-validation session
+        logger.logData([
+            "\t \t \t \t Cross-validation session data",
+            f"\n* k: {self.__k}",
+            f"\n* Dimensionality of data: {self.__dimensionality}",
+            f"\n* Total data: {self.__multitude}",
+            f"\n* Validation-set size: {self.__multitude // self.__k}",
+            f"\n* Train-set size: {self.__multitude - self.__multitude // self.__k}"
+        ])
+
         # Create a model for each possible combination of the parameters
         models: List[MultiLayerPerceptron] = []
         for architecture in architectureValues:
@@ -44,7 +58,20 @@ class CrossValidation(object):
                     models.append(model)
 
         for index, model in enumerate(models):
-            self.__crossValidate(model, index)
+            messages: List[str] = []
+            messages.append(f"Model: {index + 1}")
+            messages.append("\n" + str(model))
+
+            starTime = time.time()
+            averageLoss = self.__crossValidate(model, index)
+
+            endTime = time.time()
+
+            # Print data
+            messages.append(f"\nAverage loss: {averageLoss}")
+            messages.append(f"\nDuration: {round(endTime - starTime)} seconds")
+
+            logger.logData(messages)
 
 
     def __crossValidate(self, model: MultiLayerPerceptron, index: int) -> float:
@@ -52,12 +79,6 @@ class CrossValidation(object):
             Trains and tests the given {model} using k-cross-validation. Returns the average loss
             in each k-fold.
         '''
-        print()
-        print(f"Model: {index + 1}")
-        print(model)
-
-        starTime = time.time()
-
         # Split the dataset {self.__X} and the targets {self.__y} into {self.__k} equal parts (chunks) 
         chunksX: Tuple[torch.Tensor] = self.__X.split(self.__k)
         chunksY: Tuple[torch.Tensor] = self.__y.split(self.__k)
@@ -73,14 +94,7 @@ class CrossValidation(object):
 
             totalLoss += loss
 
-        endTime = time.time()
-        
-        # Print data
-        print(f"Average loss: {round(totalLoss / self.__k, ndigits=2)}")
-        print(f"Duration: {round(endTime - starTime)} seconds")
-
-
-        return totalLoss
+        return round(totalLoss / self.__k, ndigits=2)
 
 
     def __getPartition(self, chunks: Tuple[torch.Tensor], i: int) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -101,7 +115,7 @@ class CrossValidation(object):
             # In the first iteration, the first chunk is used as validation set, and the next k-1 as train set
             trainSet = torch.concat(chunks[1:])
             validationSet = chunks[0]
-        elif i == self.__k:
+        elif i == self.__k - 1:
             # In the second iteration, the last chunk is used as validation set, and the previous k-1 as train set
             trainSet = torch.concat(chunks[0:self.__k-1])
             validationSet = chunks[self.__k-1]

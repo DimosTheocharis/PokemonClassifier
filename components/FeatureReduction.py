@@ -1,9 +1,12 @@
 from typing import List
-from PIL import Image
 
 from customTypes.Pokemon import Pokemon
 
 class FeatureReduction(object):
+    '''
+        This class is responsible for providing methods that reduct a sample's size. Currently, the only method
+        for feature reduction is sampling down the image of a Pokemon (sample).
+    '''
     def __init__(self):
         pass
 
