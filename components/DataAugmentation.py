@@ -111,11 +111,102 @@ class DataAugmentation(object):
                     processingTypes.append(ProcessingType.CropBottomLeftCorner)
 
 
+            # Translate
+            if (random.random() >= 0.7):
+                newImage = self.translateImage(newImage)
+                processingTypes.append(ProcessingType.Translate)
+
+
             if (len(processingTypes) > 0 and any(processingTypes == processing for processing in [item[1] for item in augmentedImages])) == False:
                 augmentedImages.append((newImage, processingTypes))
 
         return augmentedImages
+    
 
+
+    def cropImageCenter(self, image: Image.Image) -> Image.Image:
+        '''
+        '''
+        width: int = image.width
+        height: int = image.height
+        cropBox: Tuple[int] = (round(width * 0.25), round(height * 0.25), round(width * 0.75), round(height * 0.75))
+
+        return self.__cropImage(image, cropBox)
+    
+
+    def cropImageTopLeftCorner(self, image: Image.Image) -> Image.Image:
+        '''
+            Crops the area [0.15, 0.15, 0.65, 0.65] of the image
+        '''
+        width: int = image.width
+        height: int = image.height
+        cropBox: Tuple[int] = (round(width * 0.15), round(height * 0.15), round(width * 0.65), round(height * 0.65))
+
+        return self.__cropImage(image, cropBox)
+    
+
+    def cropImageTopRightCorner(self, image: Image.Image) -> Image.Image:
+        '''
+            Crops the area [0.35, 0.15, 0.85, 0.65] of the image
+        '''
+        width: int = image.width
+        height: int = image.height
+        cropBox: Tuple[int] = (round(width * 0.35), round(height * 0.15), round(width * 0.85), round(height * 0.65))
+
+        return self.__cropImage(image, cropBox)
+    
+
+    def cropImageBottomRightCorner(self, image: Image.Image) -> Image.Image:
+        '''
+            Crops the area [0.35, 0.35, 0.85, 0.85] of the image
+        '''
+        width: int = image.width
+        height: int = image.height
+        cropBox: Tuple[int] = (round(width * 0.35), round(height * 0.35), round(width * 0.85), round(height * 0.85))
+
+        return self.__cropImage(image, cropBox)
+
+
+    def cropImageBottomLeftCorner(self, image: Image.Image) -> Image.Image:
+        '''
+            Crops the area [0.15, 0.35, 0.65, 0.85] of the image
+        '''
+        width: int = image.width
+        height: int = image.height
+        cropBox: Tuple[int] = (round(width * 0.15), round(height * 0.35), round(width * 0.65), round(height * 0.85))
+
+        return self.__cropImage(image, cropBox)
+
+
+    def translateImage(self, image: Image.Image) -> Image.Image:
+        '''
+            Moves the given {image} in the x and y direction by some random numbers between 5% of the width
+            and 5% of the height respectfully
+        '''
+        w: int = round(image.width * 0.10)
+        h: int = round(image.height * 0.10)
+        horizontalOffset: int = random.randint(-w, w)
+        verticalOffset: int = random.randint(-h, h)
+
+        translatedImage: Image.Image = image.transform(
+            image.size, 
+            Image.Transform.AFFINE,
+            (1, 0, horizontalOffset,           
+            0, 1, verticalOffset)
+        )
+
+        return translatedImage
+
+
+
+    def __cropImage(self, image: Image.Image, cropBox: Tuple[int]) -> Image.Image:
+        '''
+        '''
+        # Cropped image
+        croppedImage: Image.Image = image.crop(cropBox)
+
+        return croppedImage.resize((image.width, image.height))
+    
 
 
     def __adjustBrightness(self, image: Image.Image, brightnessFactor: float = 1.2) -> Image.Image:
@@ -133,64 +224,5 @@ class DataAugmentation(object):
         adjustedImage: Image.Image =enhancer.enhance(brightnessFactor)
 
         return adjustedImage
-    
-
-
-    def cropImageCenter(self, image: Image.Image) -> Image.Image:
-        '''
-        '''
-        width: int = image.width
-        height: int = image.height
-        cropBox: Tuple[int] = (round(width * 0.25), round(height * 0.25), round(width * 0.75), round(height * 0.75))
-
-        return self.__cropImage(image, cropBox)
-    
-
-    def cropImageTopLeftCorner(self, image: Image.Image) -> Image.Image:
-        '''
-        '''
-        width: int = image.width
-        height: int = image.height
-        cropBox: Tuple[int] = (round(width * 0), round(height * 0), round(width * 0.5), round(height * 0.5))
-
-        return self.__cropImage(image, cropBox)
-    
-
-    def cropImageTopRightCorner(self, image: Image.Image) -> Image.Image:
-        '''
-        '''
-        width: int = image.width
-        height: int = image.height
-        cropBox: Tuple[int] = (round(width * 0.5), round(height * 0), round(width * 1), round(height * 0.5))
-
-        return self.__cropImage(image, cropBox)
-    
-
-    def cropImageBottomRightCorner(self, image: Image.Image) -> Image.Image:
-        '''
-        '''
-        width: int = image.width
-        height: int = image.height
-        cropBox: Tuple[int] = (round(width * 0.5), round(height * 0.5), round(width * 1), round(height * 1))
-
-        return self.__cropImage(image, cropBox)
-
-
-    def cropImageBottomLeftCorner(self, image: Image.Image) -> Image.Image:
-        '''
-        '''
-        width: int = image.width
-        height: int = image.height
-        cropBox: Tuple[int] = (round(width * 0), round(height * 0.5), round(width * 0.5), round(height * 1))
-
-        return self.__cropImage(image, cropBox)
-
-    def __cropImage(self, image: Image.Image, cropBox: Tuple[int]) -> Image.Image:
-        '''
-        '''
-        # Cropped image
-        croppedImage: Image.Image = image.crop(cropBox)
-
-        return croppedImage.resize((image.width, image.height))
 
 

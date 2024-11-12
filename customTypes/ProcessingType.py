@@ -10,3 +10,4 @@ class ProcessingType(Enum):
     CropTopRightCorner = "CTRC"
     CropBottomRightCorner = "CBRC"
     CropBottomLeftCorner = "CBLC"
+    Translate = "T"
