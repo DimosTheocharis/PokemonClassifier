@@ -108,6 +108,18 @@ class MultiLayerPerceptron(nn.Module):
 
             loss: torch.Tensor = criterion(yEvaluation, yTest)
             return loss.item()
+        
+    
+    def testRaw(self, xTest: torch.Tensor) -> torch.Tensor:
+        '''
+            Feeds the {xTest} data into the trained network. It returns the independent probability of 
+            each sample belonging to each class.
+        '''
+        # Turn-off back propagation
+        with torch.no_grad():
+            yEvaluation = self(xTest)
+
+            return yEvaluation
 
     
     def forward(self, x: torch.Tensor) -> torch.Tensor:

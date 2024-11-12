@@ -36,7 +36,32 @@ class DataPreparation(object):
         y: torch.Tensor = torch.stack(y, dim=0)
 
         return (X, y)
+    
 
+    def find2MostLikelyPokemonTypes(self, probabilities: torch.Tensor) -> Tuple[PokemonType, PokemonType]:
+        '''
+            Given a tensor of {probabilities} for each Pokemon type, this method returns the 2 types with
+            the highest probability, in a tuple.
+        '''
+        probabilities: List[float] = probabilities.tolist()
+        maxProbIndex1: int = 0
+        maxProbIndex2: int = 1
+
+        # Make sure that maxProb1 contains the 1st highest probability and the maxProb2 contains the 2nd one.
+        if (probabilities[maxProbIndex1] < probabilities[maxProbIndex2]):
+            test = maxProbIndex1
+            maxProbIndex1 = maxProbIndex2
+            maxProbIndex2 = test
+
+        for i in range(2, len(probabilities)):
+            if (probabilities[i] > probabilities[maxProbIndex1]):
+                maxProbIndex2 = maxProbIndex1
+                maxProbIndex1 = i
+            elif (probabilities[i] > probabilities[maxProbIndex2]):
+                maxProbIndex2 = i
+
+
+        return (PokemonType(maxProbIndex1), PokemonType(maxProbIndex2))
 
 
 
